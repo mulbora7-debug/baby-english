@@ -83,7 +83,7 @@ function learningStreak(completedDates, today = new Date()) {
 
 localStorage.removeItem(legacyCompletedKey);
 const state = {
-  view: "home", currentDay: lessonKeyFor(), todayKey: localDateKey(), stage: 0, quizSolved: false,
+  view: "home", currentDay: lessonKeyFor(), todayKey: localDateKey(), stage: 0, storyStage: 0, quizSolved: false,
   completedDates: loadCompletedDates()
 };
 const stageNames = ["대화 듣기","오늘의 단어","그림 퀴즈","완료"];
@@ -430,6 +430,7 @@ function renderStoryPreview(key) {
   screen.querySelectorAll("[data-episode]").forEach(button => {
     button.onclick = () => {
       state.view = `episode:${key}:${button.dataset.episode}`;
+      state.storyStage = 0;
       render();
       window.scrollTo({top:0,behavior:"smooth"});
     };
@@ -468,43 +469,71 @@ function renderStoryEpisode(key,index) {
       </span>
     </article>`).join("");
   const phraseTranslation = lesson.lines.find(([en]) => en.replace(/[.!?]/g,"").toLowerCase() === lesson.phrase.replace(/[.!?]/g,"").toLowerCase())?.[1] || "오늘의 한마디";
-  screen.innerHTML = `
-    <article class="card story-lesson">
-      <section class="story-reading-pane">
-        <button class="story-back" data-story-back>← ${plan.title}</button>
-        <p class="stage-label">에피소드 ${index + 1} · 3~5분 이야기</p>
-        <h2 class="stage-title">${lesson.icon} ${lesson.title}</h2>
+  const storyStages = [
+    `
+      <section class="story-step story-listen-step">
         <section class="read-story-box">
           <span class="read-story-icon">📖</span>
-          <span><strong>이야기 전체 듣기</strong><small>처음부터 차례로 읽어줄게요.</small></span>
-          <button data-read-story="en">🇺🇸 영어 이야기</button>
-          <button data-read-story="ko">🇰🇷 한국어 이야기</button>
+          <span><strong>이야기 듣기</strong><small>큰 버튼을 눌러 들어보세요.</small></span>
+          <button data-read-story="en">🇺🇸 영어</button>
+          <button data-read-story="ko">🇰🇷 한국어</button>
         </section>
         <div class="story-lines">${lines}</div>
-      </section>
-      <section class="story-activity-pane">
+      </section>`,
+    `
+      <section class="story-step story-word-step">
         <section class="phrase-box">
-          <span>오늘의 한마디</span>
+          <span>💬 오늘의 한마디</span>
           <strong>${lesson.phrase}</strong>
           <small>${phraseTranslation}</small>
           <span class="phrase-audio-row">
-            <button data-phrase="en">🇺🇸 영어로 듣기</button>
-            <button data-phrase="ko">🇰🇷 한국어로 듣기</button>
+            <button data-phrase="en">🇺🇸 영어 듣기</button>
+            <button data-phrase="ko">🇰🇷 한국어 듣기</button>
           </span>
         </section>
-        <h3 class="story-heading">⭐ 이야기 속 단어</h3>
+        <h3 class="story-heading">⭐ 단어를 눌러보세요</h3>
         <div class="mini-word-grid">${words}</div>
-        <section class="story-quiz">
-          <h3>🎯 ${lesson.quiz.prompt}</h3>
-          <div class="story-quiz-grid">${options}</div>
-          <p class="feedback" data-story-feedback></p>
-        </section>
-        <div class="story-finish" data-story-finish hidden>🎉 잘했어요! 이야기 별을 받았어요! ⭐</div>
-      </section>
+      </section>`,
+    `
+      <section class="story-step story-quiz">
+        <h3>🎯 ${lesson.quiz.prompt}</h3>
+        <div class="story-quiz-grid">${options}</div>
+        <p class="feedback" data-story-feedback>그림을 골라보세요!</p>
+        <div class="story-finish" data-story-finish hidden>🎉 참 잘했어요! ⭐</div>
+      </section>`
+  ];
+  const storyStepLabels = ["1 · 이야기 듣기","2 · 단어 놀이","3 · 그림 퀴즈"];
+  screen.innerHTML = `
+    <article class="card story-lesson">
+      <header class="story-step-header">
+        <button class="story-back" data-story-back aria-label="${plan.title}로 돌아가기">← 돌아가기</button>
+        <span class="story-step-title"><strong>${lesson.icon} ${lesson.title}</strong><small>${storyStepLabels[state.storyStage]}</small></span>
+        <span class="story-step-dots" aria-label="3단계 중 ${state.storyStage + 1}단계">
+          ${[0,1,2].map(step => `<i class="${step === state.storyStage ? "active" : ""}"></i>`).join("")}
+        </span>
+      </header>
+      ${storyStages[state.storyStage]}
+      <footer class="story-step-actions">
+        <button class="secondary-btn" data-story-prev ${state.storyStage === 0 ? "disabled" : ""}>← 이전</button>
+        <button class="primary-btn" data-story-next ${state.storyStage === 2 ? "hidden" : ""}>다음 →</button>
+      </footer>
     </article>`;
   screen.querySelector("[data-story-back]").onclick = () => {
     stopSpeech();
     state.view = `story:${key}`;
+    render();
+  };
+  const storyPrev = screen.querySelector("[data-story-prev]");
+  const storyNext = screen.querySelector("[data-story-next]");
+  storyPrev.onclick = () => {
+    if (state.storyStage === 0) return;
+    stopSpeech();
+    state.storyStage -= 1;
+    render();
+  };
+  if (storyNext) storyNext.onclick = () => {
+    stopSpeech();
+    state.storyStage = Math.min(state.storyStage + 1, 2);
     render();
   };
   screen.querySelectorAll("[data-line]").forEach(button => {

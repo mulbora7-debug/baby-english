@@ -139,6 +139,13 @@ h1 { margin:0; color:#9d174d; font-size:clamp(1.65rem,6vw,2.2rem); text-shadow:0
   margin-top:18px; padding:16px; border-radius:18px; background:#f0fdf4;
   color:#166534; text-align:center; font-size:1.12rem; font-weight:900;
 }
+.story-step-header { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.story-step-title strong,.story-step-title small { display:block; text-align:center; }
+.story-step-dots { display:flex; gap:6px; }
+.story-step-dots i { display:block; width:12px; height:12px; border-radius:50%; background:#fbcfe8; }
+.story-step-dots i.active { background:#ec4899; }
+.story-step-actions { display:flex; gap:10px; margin-top:12px; }
+.story-step-actions button { flex:1; }
 .card { background:var(--card); border:2px solid var(--border); border-radius:32px; padding:24px; box-shadow:var(--shadow); }
 .stage-label { margin:0 0 8px; color:var(--accent); font-weight:900; }
 .stage-title { margin:0; font-size:clamp(1.5rem,6vw,2rem); color:#9d174d; }
@@ -285,54 +292,62 @@ h1 { margin:0; color:#9d174d; font-size:clamp(1.65rem,6vw,2.2rem); text-shadow:0
   .streak-message { margin-bottom:10px!important; padding:8px 14px; }
   .story-back { min-height:36px; margin-bottom:7px; }
   .story-lesson {
-    display:grid; grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr);
-    gap:14px; overflow:hidden!important;
+    display:flex; flex-direction:column; gap:10px; overflow:hidden!important;
   }
-  .story-reading-pane,.story-activity-pane {
-    min-width:0; min-height:0; overflow:hidden;
+  .story-step-header {
+    flex:0 0 50px; display:grid; grid-template-columns:130px 1fr 90px;
+    align-items:center; gap:10px; border-bottom:2px dashed #f9a8d4;
   }
-  .story-reading-pane {
-    display:flex; flex-direction:column; padding-right:14px;
-    border-right:2px dashed #e9d5ff;
+  .story-step-header .story-back { margin:0; }
+  .story-step-title { text-align:center; }
+  .story-step-title strong,.story-step-title small { display:block; }
+  .story-step-title strong { color:#9d174d; font-size:1.25rem; }
+  .story-step-title small { margin-top:2px; color:#a855f7; font-weight:900; }
+  .story-step-dots { display:flex; justify-content:flex-end; gap:7px; }
+  .story-step-dots i { width:14px; height:14px; border-radius:50%; background:#fbcfe8; }
+  .story-step-dots i.active { background:#ec4899; transform:scale(1.2); }
+  .story-step { flex:1 1 auto; min-height:0; overflow:hidden; }
+  .story-listen-step { display:grid; grid-template-columns:280px 1fr; gap:12px; }
+  .story-listen-step .read-story-box {
+    grid-template-columns:1fr; align-content:center; justify-items:center;
+    margin:0; padding:14px; text-align:center;
   }
-  .story-activity-pane { display:flex; flex-direction:column; }
-  .read-story-box { margin:10px 0; padding:10px; }
-  .story-reading-pane .read-story-box {
-    grid-template-columns:auto 1fr; gap:7px; margin:7px 0;
-  }
-  .story-reading-pane .read-story-box button { min-height:36px; }
+  .story-listen-step .read-story-box button { width:100%; min-height:48px; }
+  .story-listen-step .read-story-icon { font-size:3.4rem; }
   .story-lines {
-    flex:1 1 auto; grid-template-columns:1fr; gap:6px; margin:0;
-    min-height:0;
+    grid-template-columns:1fr; grid-template-rows:repeat(3,1fr); gap:7px;
+    min-height:0; height:100%; margin:0;
   }
   .story-line:last-child:nth-child(odd) { grid-column:auto; }
-  .story-line { min-height:0; padding:7px 9px; }
-  .story-line-icon { font-size:1.5rem; }
-  .story-line-copy strong { font-size:.98rem; line-height:1.2; }
-  .story-line-copy span { margin-top:1px; font-size:.8rem; }
-  .line-audio { width:38px; height:38px; font-size:1rem; }
-  .phrase-box { gap:5px; padding:9px; }
-  .phrase-box strong { font-size:1.35rem; }
-  .phrase-box button { min-height:36px; }
-  .story-heading { margin:7px 0 5px; font-size:1rem; }
-  .mini-word { min-height:0; padding:6px 4px; }
-  .mini-word span { font-size:1.65rem; }
-  .mini-word strong { margin:2px 0 1px; font-size:.95rem; }
-  .mini-word small { font-size:.75rem; }
-  .mini-audio-row { margin-top:6px; }
-  .mini-audio-row button { min-height:32px; padding:0 5px; font-size:.7rem; }
-  .story-quiz { flex:1 1 auto; min-height:0; margin-top:7px; }
-  .story-quiz h3 { margin:5px 0; font-size:1rem; }
-  .story-quiz-option { min-height:64px; }
-  .story-quiz-option span { margin:0; font-size:1.85rem; }
-  .choice-audio-row button { min-height:30px; }
-  .story-quiz .feedback { min-height:24px; margin:5px 0 0; font-size:.9rem; }
-  .story-finish { margin-top:5px; padding:7px; font-size:.9rem; }
+  .story-line { min-height:0; padding:10px 12px; }
+  .story-line-icon { font-size:2rem; }
+  .story-line-copy strong { font-size:1.1rem; line-height:1.25; }
+  .story-line-copy span { margin-top:2px; font-size:.9rem; }
+  .line-audio { width:46px; height:46px; font-size:1.1rem; }
+  .story-word-step { display:grid; grid-template-rows:auto auto 1fr; gap:8px; }
+  .story-word-step .phrase-box { grid-template-columns:1fr 1fr; align-items:center; padding:12px 22px; }
+  .story-word-step .phrase-box > span:first-child,.story-word-step .phrase-box > strong,.story-word-step .phrase-box > small { grid-column:1; }
+  .story-word-step .phrase-audio-row { grid-column:2; grid-row:1/4; align-items:center; }
+  .story-word-step .phrase-audio-row button { min-height:52px; }
+  .story-heading { margin:0; font-size:1.1rem; }
+  .story-word-step .mini-word-grid { min-height:0; }
+  .mini-word { min-height:0; padding:10px 7px; }
+  .mini-word span { font-size:2.3rem; }
+  .mini-word strong { margin:3px 0 1px; font-size:1.1rem; }
+  .mini-audio-row { margin-top:8px; }
+  .mini-audio-row button { min-height:42px; padding:0 8px; font-size:.85rem; }
+  .story-quiz { display:flex; flex-direction:column; min-height:0; margin:0; }
+  .story-quiz h3 { margin:0 0 8px; font-size:1.25rem; text-align:center; }
+  .story-quiz-grid { flex:1 1 auto; min-height:0; }
+  .story-quiz-option { min-height:0; height:100%; }
+  .story-quiz-option span { font-size:3.1rem; }
+  .choice-audio-row button { min-height:38px; }
+  .story-quiz .feedback { min-height:28px; margin:6px 0 0; font-size:1rem; }
+  .story-finish { margin-top:5px; padding:7px; font-size:1rem; }
+  .story-step-actions { flex:0 0 48px; display:flex; gap:10px; }
+  .story-step-actions button { min-height:48px; }
   .episode-list { gap:8px; margin-top:10px; }
   .episode-item { padding:10px; }
-}
-@media (max-width:699px), (orientation:portrait) {
-  .story-reading-pane,.story-activity-pane { overflow:visible; }
 }
 @media (max-width:500px) {
   .app-shell { padding:20px 16px 44px; }
