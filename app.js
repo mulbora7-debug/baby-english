@@ -405,33 +405,37 @@ function renderStoryEpisode(key,index) {
   const phraseTranslation = lesson.lines.find(([en]) => en.replace(/[.!?]/g,"").toLowerCase() === lesson.phrase.replace(/[.!?]/g,"").toLowerCase())?.[1] || "오늘의 한마디";
   screen.innerHTML = `
     <article class="card story-lesson">
-      <button class="story-back" data-story-back>← ${plan.title}</button>
-      <p class="stage-label">에피소드 ${index + 1} · 3~5분 이야기</p>
-      <h2 class="stage-title">${lesson.icon} ${lesson.title}</h2>
-      <section class="read-story-box">
-        <span class="read-story-icon">📖</span>
-        <span><strong>이야기 전체 듣기</strong><small>처음부터 차례로 읽어줄게요.</small></span>
-        <button data-read-story="en">🇺🇸 영어 이야기</button>
-        <button data-read-story="ko">🇰🇷 한국어 이야기</button>
+      <section class="story-reading-pane">
+        <button class="story-back" data-story-back>← ${plan.title}</button>
+        <p class="stage-label">에피소드 ${index + 1} · 3~5분 이야기</p>
+        <h2 class="stage-title">${lesson.icon} ${lesson.title}</h2>
+        <section class="read-story-box">
+          <span class="read-story-icon">📖</span>
+          <span><strong>이야기 전체 듣기</strong><small>처음부터 차례로 읽어줄게요.</small></span>
+          <button data-read-story="en">🇺🇸 영어 이야기</button>
+          <button data-read-story="ko">🇰🇷 한국어 이야기</button>
+        </section>
+        <div class="story-lines">${lines}</div>
       </section>
-      <div class="story-lines">${lines}</div>
-      <section class="phrase-box">
-        <span>오늘의 한마디</span>
-        <strong>${lesson.phrase}</strong>
-        <small>${phraseTranslation}</small>
-        <span class="phrase-audio-row">
-          <button data-phrase="en">🇺🇸 영어로 듣기</button>
-          <button data-phrase="ko">🇰🇷 한국어로 듣기</button>
-        </span>
+      <section class="story-activity-pane">
+        <section class="phrase-box">
+          <span>오늘의 한마디</span>
+          <strong>${lesson.phrase}</strong>
+          <small>${phraseTranslation}</small>
+          <span class="phrase-audio-row">
+            <button data-phrase="en">🇺🇸 영어로 듣기</button>
+            <button data-phrase="ko">🇰🇷 한국어로 듣기</button>
+          </span>
+        </section>
+        <h3 class="story-heading">⭐ 이야기 속 단어</h3>
+        <div class="mini-word-grid">${words}</div>
+        <section class="story-quiz">
+          <h3>🎯 ${lesson.quiz.prompt}</h3>
+          <div class="story-quiz-grid">${options}</div>
+          <p class="feedback" data-story-feedback></p>
+        </section>
+        <div class="story-finish" data-story-finish hidden>🎉 잘했어요! 이야기 별을 받았어요! ⭐</div>
       </section>
-      <h3 class="story-heading">⭐ 이야기 속 단어</h3>
-      <div class="mini-word-grid">${words}</div>
-      <section class="story-quiz">
-        <h3>🎯 ${lesson.quiz.prompt}</h3>
-        <div class="story-quiz-grid">${options}</div>
-        <p class="feedback" data-story-feedback></p>
-      </section>
-      <div class="story-finish" data-story-finish hidden>🎉 잘했어요! 이야기 별을 받았어요! ⭐</div>
     </article>`;
   screen.querySelector("[data-story-back]").onclick = () => {
     stopSpeech();
