@@ -1,0 +1,5 @@
+# Local and temporary files
+*.zip
+.DS_Store
+Thumbs.db
+.vscode/

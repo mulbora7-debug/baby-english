@@ -63,8 +63,21 @@ baby_english/
 
 브라우저가 음성 재생을 막는 경우 화면의 듣기 버튼을 한 번 직접 누르면 재생이 시작됩니다. 학습 완료 기록을 초기화하려면 브라우저 개발자 도구에서 사이트의 로컬 저장소 항목 `babyEnglishCompleted`를 삭제하세요.
 
-## 온라인 배포
+## GitHub Pages 배포
 
-이 프로젝트는 별도의 빌드 과정이 없는 정적 웹앱이므로 Cloudflare Pages,
-GitHub Pages, Netlify 같은 정적 사이트 호스팅에 폴더 그대로 배포할 수 있습니다.
-HTTPS 주소로 배포하면 태블릿에서 링크를 누르거나 홈 화면에 추가해 사용할 수 있습니다.
+이 프로젝트는 별도의 빌드 과정이 없는 정적 웹앱입니다. GitHub 저장소의
+`main` 브랜치 루트에서 바로 GitHub Pages로 공개할 수 있습니다.
+
+GitHub 저장소의 `Settings > Pages`에서 다음과 같이 선택합니다.
+
+```text
+Source: Deploy from a branch
+Branch: main
+Folder: / (root)
+```
+
+배포가 완료되면 다음 형태의 HTTPS 주소로 태블릿에서 접속할 수 있습니다.
+
+```text
+https://사용자이름.github.io/baby-english/
+```
