@@ -1,0 +1,405 @@
+const makeLesson = (label, theme, emoji, pattern, dialogues, words, prompt, answer, options) => ({
+  label, theme, emoji, pattern, dialogues, words, quiz: { prompt, answer, options }
+});
+const d = (speaker, icon, en, ko) => ({ speaker, icon, en, ko });
+const w = (en, ko, emoji, example) => ({ en, ko, emoji, example });
+const o = (en, emoji) => ({ en, emoji });
+
+const lessons = {
+  day1: makeLesson("Day 1","동물","🐼","I like ___!",
+    [d("A","🧒","What animal do you like?","어떤 동물을 좋아하니?"),d("B","👧","I like pandas!","나는 판다를 좋아해!")],
+    [w("panda","판다","🐼","I like pandas!"),w("animal","동물","🐾","What animal do you like?"),w("like","좋아하다","❤️","I like pandas!")],
+    "panda를 찾아보세요!","panda",[o("cat","🐱"),o("panda","🐼"),o("dog","🐶")]),
+  day2: makeLesson("Day 2","과일","🍎","I like ___!",
+    [d("A","🧒","What fruit do you like?","어떤 과일을 좋아하니?"),d("B","👧","I like apples!","나는 사과를 좋아해!")],
+    [w("apple","사과","🍎","I like apples!"),w("fruit","과일","🍓","What fruit do you like?"),w("sweet","달콤한","🍯","It is sweet!")],
+    "apple을 찾아보세요!","apple",[o("banana","🍌"),o("apple","🍎"),o("grape","🍇")]),
+  day3: makeLesson("Day 3","날씨","☀️","It is ___!",
+    [d("A","🧒","How is the weather?","날씨가 어떠니?"),d("B","👧","It is sunny!","날씨가 화창해!")],
+    [w("sunny","화창한","☀️","It is sunny!"),w("weather","날씨","🌤️","How is the weather?"),w("rainy","비 오는","🌧️","It is rainy!")],
+    "sunny를 찾아보세요!","sunny",[o("rainy","🌧️"),o("snowy","❄️"),o("sunny","☀️")]),
+  day4: makeLesson("Day 4","탈것","🚒","It is a ___!",
+    [d("A","🧒","What is that?","저것은 무엇이니?"),d("B","👧","It is a fire truck!","소방차야!")],
+    [w("fire truck","소방차","🚒","It is a fire truck!"),w("car","자동차","🚗","It is a car!"),w("bus","버스","🚌","It is a bus!")],
+    "fire truck을 찾아보세요!","fire truck",[o("bus","🚌"),o("fire truck","🚒"),o("car","🚗")]),
+  day5: makeLesson("Day 5","아이스크림","🍌","___, please!",
+    [d("A","🧒","What ice cream do you want?","어떤 아이스크림을 원하니?"),d("B","👧","Banana, please!","바나나 맛으로 주세요!")],
+    [w("banana","바나나","🍌","Banana, please!"),w("ice cream","아이스크림","🍦","I want ice cream!"),w("please","부탁해요 / 주세요","🙏","Banana, please!")],
+    "banana를 찾아보세요!","banana",[o("chocolate","🍫"),o("strawberry","🍓"),o("banana","🍌")])
+};
+
+const completedKey = "babyEnglishCompleted";
+const state = {
+  view: "home", currentDay: "day1", stage: 0, quizSolved: false,
+  completedDays: JSON.parse(localStorage.getItem(completedKey) || "[]")
+};
+const stageNames = ["대화 듣기","오늘의 단어","그림 퀴즈","완료"];
+const screen = document.getElementById("screen");
+const dayNav = document.getElementById("day-nav");
+const homeButton = document.getElementById("home-btn");
+const progressWrap = document.getElementById("progress-wrap");
+let voices = [];
+
+const storyPlans = {
+  cinderella: {
+    title: "신데렐라의 반짝이는 하루",
+    emoji: "👗",
+    description: "친절, 옷, 시간 표현을 배우는 따뜻한 이야기",
+    episodes: [
+      ["🧹","친절한 신데렐라","I can help! · help, clean, kind"],
+      ["✨","반짝이는 변신","A pretty dress! · dress, shoes, pretty"],
+      ["🕛","열두 시 종소리","It is time! · clock, go, home"],
+      ["👠","유리구두 찾기","Is this yours? · shoe, find, mine"]
+    ]
+  },
+  mermaid: {
+    title: "인어공주의 바닷속 친구들",
+    emoji: "🧜‍♀️",
+    description: "바다 생물, 색깔, 감정을 배우는 모험 이야기",
+    episodes: [
+      ["🐠","알록달록 물고기","I see a fish! · fish, sea, swim"],
+      ["🐚","예쁜 조개껍데기","Look at this! · shell, pretty, pink"],
+      ["🐬","돌고래 친구","Let’s play! · friend, jump, play"],
+      ["🌊","집으로 가는 길","I am happy! · home, happy, together"]
+    ]
+  }
+};
+
+const storyLessons = {
+  cinderella: [
+    {
+      title:"친절한 신데렐라", icon:"🧹",
+      lines:[
+        ["Cinderella is kind.","신데렐라는 친절해요."],
+        ["She helps her little friends.","작은 친구들을 도와줘요."],
+        ["I can help!","내가 도와줄게!"]
+      ],
+      phrase:"I can help!",
+      words:[["help","돕다","🤝"],["clean","청소하다","🧹"],["kind","친절한","💛"]],
+      quiz:{prompt:"help를 찾아보세요!",answer:"help",options:[["help","🤝"],["sleep","😴"],["eat","🍽️"]]}
+    },
+    {
+      title:"반짝이는 변신", icon:"✨",
+      lines:[
+        ["A kind fairy comes.","친절한 요정이 찾아와요."],
+        ["The dress is blue and bright.","드레스는 파랗고 반짝여요."],
+        ["A pretty dress!","예쁜 드레스다!"]
+      ],
+      phrase:"A pretty dress!",
+      words:[["dress","드레스","👗"],["shoes","신발","👠"],["pretty","예쁜","✨"]],
+      quiz:{prompt:"dress를 찾아보세요!",answer:"dress",options:[["hat","👒"],["dress","👗"],["bag","👜"]]}
+    },
+    {
+      title:"열두 시 종소리", icon:"🕛",
+      lines:[
+        ["Ding, dong! The clock rings.","딩동! 시계가 울려요."],
+        ["It is time to go.","이제 갈 시간이에요."],
+        ["I am going home!","나는 집에 가요!"]
+      ],
+      phrase:"It is time!",
+      words:[["clock","시계","🕛"],["go","가다","🏃"],["home","집","🏠"]],
+      quiz:{prompt:"clock을 찾아보세요!",answer:"clock",options:[["clock","🕛"],["star","⭐"],["moon","🌙"]]}
+    },
+    {
+      title:"유리구두 찾기", icon:"👠",
+      lines:[
+        ["A little shoe is on the step.","작은 신발이 계단에 있어요."],
+        ["The prince finds Cinderella.","왕자가 신데렐라를 찾아요."],
+        ["Is this yours?","이것이 네 것이니?"]
+      ],
+      phrase:"Is this yours?",
+      words:[["shoe","신발","👠"],["find","찾다","🔎"],["mine","내 것","🙋"]],
+      quiz:{prompt:"shoe를 찾아보세요!",answer:"shoe",options:[["shoe","👠"],["cup","🥤"],["book","📕"]]}
+    }
+  ],
+  mermaid: [
+    {
+      title:"알록달록 물고기", icon:"🐠",
+      lines:[
+        ["The little mermaid swims in the sea.","작은 인어공주가 바다에서 헤엄쳐요."],
+        ["She sees a colorful fish.","알록달록한 물고기를 보아요."],
+        ["I see a fish!","물고기가 보여!"]
+      ],
+      phrase:"I see a fish!",
+      words:[["fish","물고기","🐠"],["sea","바다","🌊"],["swim","헤엄치다","🏊"]],
+      quiz:{prompt:"fish를 찾아보세요!",answer:"fish",options:[["fish","🐠"],["bird","🐦"],["cat","🐱"]]}
+    },
+    {
+      title:"예쁜 조개껍데기", icon:"🐚",
+      lines:[
+        ["A pink shell shines in the sand.","분홍 조개가 모래에서 빛나요."],
+        ["The mermaid picks it up.","인어공주가 조개를 들어요."],
+        ["Look at this!","이것 좀 봐!"]
+      ],
+      phrase:"Look at this!",
+      words:[["shell","조개","🐚"],["pretty","예쁜","✨"],["pink","분홍색","🩷"]],
+      quiz:{prompt:"shell을 찾아보세요!",answer:"shell",options:[["star","⭐"],["shell","🐚"],["apple","🍎"]]}
+    },
+    {
+      title:"돌고래 친구", icon:"🐬",
+      lines:[
+        ["A dolphin jumps high.","돌고래가 높이 뛰어요."],
+        ["They laugh and play together.","둘은 함께 웃고 놀아요."],
+        ["Let's play!","같이 놀자!"]
+      ],
+      phrase:"Let's play!",
+      words:[["friend","친구","🫶"],["jump","뛰다","🐬"],["play","놀다","🪁"]],
+      quiz:{prompt:"jump를 찾아보세요!",answer:"jump",options:[["sit","🪑"],["jump","🐬"],["sleep","😴"]]}
+    },
+    {
+      title:"집으로 가는 길", icon:"🌊",
+      lines:[
+        ["The sky turns orange.","하늘이 주황빛으로 변해요."],
+        ["The friends swim home together.","친구들이 함께 집으로 헤엄쳐요."],
+        ["I am happy!","나는 행복해!"]
+      ],
+      phrase:"I am happy!",
+      words:[["home","집","🏠"],["happy","행복한","😊"],["together","함께","👭"]],
+      quiz:{prompt:"happy를 찾아보세요!",answer:"happy",options:[["sad","😢"],["angry","😠"],["happy","😊"]]}
+    }
+  ]
+};
+
+function loadVoices() { voices = window.speechSynthesis?.getVoices() || []; }
+function voiceFor(lang) {
+  const candidates = voices.filter(v => v.lang.toLowerCase().startsWith(lang.toLowerCase()));
+  return candidates.find(v => /google|microsoft|samantha|zira|jenny|aria/i.test(v.name)) || candidates[0] || null;
+}
+function utter(text, { lang="en-US", rate=.78, pitch=1.05 }={}) {
+  const u = new SpeechSynthesisUtterance(text);
+  Object.assign(u, { lang, rate, pitch, volume:1 });
+  const voice = voiceFor(lang.split("-")[0]);
+  if (voice) u.voice = voice;
+  return u;
+}
+function speak(text, options={}) {
+  if (!("speechSynthesis" in window)) return alert("이 브라우저는 음성 재생을 지원하지 않습니다.");
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utter(text, options));
+}
+function speakSlow(text) { speak(text.replace(/[!?.,]/g,"").split(/\s+/).join(" ... "), { rate:.58 }); }
+function playWord(word, example) {
+  speechSynthesis.cancel();
+  const queue = [utter(word,{rate:.58,pitch:1.08}),utter(word,{rate:.58,pitch:1.08}),utter(example,{rate:.7,pitch:1.04})];
+  queue[0].onend = () => setTimeout(() => speechSynthesis.speak(queue[1]),250);
+  queue[1].onend = () => setTimeout(() => speechSynthesis.speak(queue[2]),350);
+  speechSynthesis.speak(queue[0]);
+}
+function renderDayNav() {
+  if (state.view !== "lesson") {
+    dayNav.innerHTML = "";
+    dayNav.hidden = true;
+    return;
+  }
+  dayNav.hidden = false;
+  dayNav.innerHTML = Object.entries(lessons).map(([key,l]) =>
+    `<button class="day-btn ${key===state.currentDay?"active":""} ${state.completedDays.includes(key)?"done":""}" data-day="${key}">${l.label}</button>`
+  ).join("");
+  dayNav.querySelectorAll("[data-day]").forEach(btn => btn.onclick = () => {
+    Object.assign(state,{currentDay:btn.dataset.day,stage:0,quizSolved:false});
+    speechSynthesis.cancel(); renderDayNav(); render();
+  });
+}
+function updateProgress() {
+  progressWrap.hidden = state.view !== "lesson";
+  if (state.view !== "lesson") return;
+  document.getElementById("progress-bar").style.width = `${(state.stage+1)*25}%`;
+  document.getElementById("progress-text").textContent = `${state.stage+1} / 4`;
+}
+function render() {
+  homeButton.classList.toggle("visible", state.view !== "home");
+  if (state.view === "home") {
+    renderHome();
+    return;
+  }
+  if (state.view.startsWith("story:")) {
+    renderStoryPreview(state.view.split(":")[1]);
+    return;
+  }
+  if (state.view.startsWith("episode:")) {
+    const [,key,index] = state.view.split(":");
+    renderStoryEpisode(key, Number(index));
+    return;
+  }
+  updateProgress();
+  [renderDialogue,renderWords,renderQuiz,renderCompletion][state.stage](lessons[state.currentDay]);
+}
+function renderHome() {
+  progressWrap.hidden = true;
+  dayNav.hidden = true;
+  screen.innerHTML = `
+    <div class="menu-intro">
+      <h2>오늘은 어떤 이야기를 만날까요?</h2>
+      <p>크고 예쁜 카드를 하나 골라 주세요.</p>
+    </div>
+    <div class="menu-grid">
+      <button class="menu-card" data-menu="lesson">
+        <span class="menu-emoji">🎈</span>
+        <span class="menu-copy"><strong>오늘의 영어</strong><span>동물, 과일, 날씨를 짧게 배워요</span></span>
+        <span class="menu-arrow">›</span>
+      </button>
+      <button class="menu-card story" data-menu="story:cinderella">
+        <span class="menu-emoji">👗</span>
+        <span class="menu-copy"><strong>신데렐라 이야기</strong><span>친절한 마음과 반짝이는 영어 표현</span></span>
+        <span class="menu-arrow">›</span>
+      </button>
+      <button class="menu-card sea" data-menu="story:mermaid">
+        <span class="menu-emoji">🧜‍♀️</span>
+        <span class="menu-copy"><strong>인어공주 이야기</strong><span>바닷속 친구들과 신나는 영어 모험</span></span>
+        <span class="menu-arrow">›</span>
+      </button>
+    </div>`;
+  screen.querySelectorAll("[data-menu]").forEach(button => {
+    button.onclick = () => {
+      state.view = button.dataset.menu;
+      if (state.view === "lesson") renderDayNav();
+      render();
+    };
+  });
+}
+function renderStoryPreview(key) {
+  const story = storyPlans[key];
+  progressWrap.hidden = true;
+  dayNav.hidden = true;
+  const episodes = story.episodes.map(([icon,title,words],index) => `
+    <button class="episode-item" data-episode="${index}">
+      <span class="episode-icon">${icon}</span>
+      <span><strong>${index + 1}. ${title}</strong><span>${words}</span></span>
+      <span class="episode-play">▶</span>
+    </button>`).join("");
+  screen.innerHTML = `
+    <article class="card">
+      <p class="stage-label">새로운 스토리 학습</p>
+      <h2 class="stage-title">${story.emoji} ${story.title}</h2>
+      <p class="stage-description">${story.description}</p>
+      <div class="episode-list">${episodes}</div>
+      <div class="notice">에피소드를 누르면 이야기 듣기 → 핵심 문장 → 단어 카드 → 그림 퀴즈 순서로 학습할 수 있어요.</div>
+    </article>`;
+  screen.querySelectorAll("[data-episode]").forEach(button => {
+    button.onclick = () => {
+      state.view = `episode:${key}:${button.dataset.episode}`;
+      render();
+      window.scrollTo({top:0,behavior:"smooth"});
+    };
+  });
+}
+function renderStoryEpisode(key,index) {
+  const plan = storyPlans[key];
+  const lesson = storyLessons[key][index];
+  progressWrap.hidden = true;
+  dayNav.hidden = true;
+  const lines = lesson.lines.map(([en,ko],lineIndex) => `
+    <section class="story-line">
+      <span class="story-line-icon">${lineIndex === lesson.lines.length - 1 ? "💬" : lesson.icon}</span>
+      <span class="story-line-copy"><strong>${en}</strong><span>${ko}</span></span>
+      <button class="line-audio" data-line="${lineIndex}" aria-label="${en} 듣기">🔊</button>
+    </section>`).join("");
+  const words = lesson.words.map(([en,ko,emoji],wordIndex) => `
+    <button class="mini-word" data-story-word="${wordIndex}">
+      <span>${emoji}</span><strong>${en}</strong><small>${ko}</small>
+    </button>`).join("");
+  const options = lesson.quiz.options.map(([en,emoji],optionIndex) => `
+    <button class="story-quiz-option" data-story-option="${optionIndex}">
+      <span>${emoji}</span><strong>${en}</strong>
+    </button>`).join("");
+  screen.innerHTML = `
+    <article class="card story-lesson">
+      <button class="story-back" data-story-back>← ${plan.title}</button>
+      <p class="stage-label">에피소드 ${index + 1} · 3~5분 이야기</p>
+      <h2 class="stage-title">${lesson.icon} ${lesson.title}</h2>
+      <div class="story-lines">${lines}</div>
+      <section class="phrase-box">
+        <span>오늘의 한마디</span>
+        <strong>${lesson.phrase}</strong>
+        <button data-phrase>🔊 천천히 듣기</button>
+      </section>
+      <h3 class="story-heading">⭐ 이야기 속 단어</h3>
+      <div class="mini-word-grid">${words}</div>
+      <section class="story-quiz">
+        <h3>🎯 ${lesson.quiz.prompt}</h3>
+        <div class="story-quiz-grid">${options}</div>
+        <p class="feedback" data-story-feedback></p>
+      </section>
+      <div class="story-finish" data-story-finish hidden>🎉 잘했어요! 이야기 별을 받았어요! ⭐</div>
+    </article>`;
+  screen.querySelector("[data-story-back]").onclick = () => {
+    speechSynthesis.cancel();
+    state.view = `story:${key}`;
+    render();
+  };
+  screen.querySelectorAll("[data-line]").forEach(button => {
+    button.onclick = () => speak(lesson.lines[Number(button.dataset.line)][0]);
+  });
+  screen.querySelector("[data-phrase]").onclick = () => speakSlow(lesson.phrase);
+  screen.querySelectorAll("[data-story-word]").forEach(button => {
+    button.onclick = () => {
+      const [en] = lesson.words[Number(button.dataset.storyWord)];
+      speak(en,{rate:.6,pitch:1.08});
+    };
+  });
+  const feedback = screen.querySelector("[data-story-feedback]");
+  screen.querySelectorAll("[data-story-option]").forEach(button => {
+    button.onclick = () => {
+      const [en] = lesson.quiz.options[Number(button.dataset.storyOption)];
+      speak(en,{rate:.62,pitch:1.08});
+      screen.querySelectorAll(".story-quiz-option").forEach(el => el.classList.remove("wrong"));
+      if(en === lesson.quiz.answer) {
+        button.classList.add("correct");
+        feedback.textContent = "정답이에요! 정말 잘했어요!";
+        screen.querySelector("[data-story-finish]").hidden = false;
+      } else {
+        button.classList.add("wrong");
+        feedback.textContent = "괜찮아요. 한 번 더 찾아볼까요?";
+      }
+    };
+  });
+}
+function shell(step,title,description,content,actions) {
+  screen.innerHTML = `<article class="card"><p class="stage-label">${step}단계 · ${stageNames[step-1]}</p><h2 class="stage-title">${title}</h2><p class="stage-description">${description}</p>${content}<div class="actions">${actions}</div></article>`;
+}
+function renderDialogue(l) {
+  const cards = l.dialogues.map((x,i) => `<section class="dialogue-card"><div class="dialogue-head"><span class="character">${x.icon}</span><strong>${x.speaker} 친구</strong></div><p class="dialogue-en">${x.en}</p><p class="dialogue-ko">${x.ko}</p><div class="audio-row"><button class="control-btn" data-a="sentence" data-i="${i}">🔊 문장 듣기</button><button class="control-btn slow" data-a="slow" data-i="${i}">🐢 천천히</button><button class="control-btn korean" data-a="ko" data-i="${i}">🇰🇷 뜻 듣기</button></div></section>`).join("");
+  shell(1,`${l.emoji} ${l.theme} 영어`,`먼저 영어 문장을 듣고 천천히 다시 들어보세요. 오늘의 표현은 <strong>${l.pattern}</strong> 입니다.`,`<div class="dialogue-list">${cards}</div>`,`<button class="primary-btn" data-next>오늘의 단어 보기 →</button>`);
+  screen.querySelectorAll("[data-a]").forEach(btn => btn.onclick = () => {
+    const x=l.dialogues[+btn.dataset.i];
+    if(btn.dataset.a==="sentence") speak(x.en);
+    if(btn.dataset.a==="slow") speakSlow(x.en);
+    if(btn.dataset.a==="ko") speak(x.ko,{lang:"ko-KR",rate:.78,pitch:1});
+  });
+  screen.querySelector("[data-next]").onclick=nextStage;
+}
+function renderWords(l) {
+  const cards=l.words.map((x,i)=>`<button class="word-card" data-word="${i}"><span class="word-emoji">${x.emoji}</span><span class="word-en">${x.en}</span><span class="word-ko">${x.ko}</span><span class="word-hint">🔊 눌러서 들어보세요</span></button>`).join("");
+  shell(2,"⭐ 오늘의 주요 단어","단어 카드를 누르면 <strong>단어를 천천히 두 번</strong> 들려주고 예문도 읽어줍니다.",`<div class="word-grid">${cards}</div><div class="notice">부모님 팁: 바로 말하도록 재촉하기보다 같은 단어를 2~3번 즐겁게 반복해 주세요.</div>`,`<button class="secondary-btn" data-prev>← 이전</button><button class="primary-btn" data-next>그림 퀴즈 풀기 →</button>`);
+  screen.querySelectorAll("[data-word]").forEach(btn=>btn.onclick=()=>{const x=l.words[+btn.dataset.word];playWord(x.en,x.example);});
+  screen.querySelector("[data-prev]").onclick=prevStage; screen.querySelector("[data-next]").onclick=nextStage;
+}
+function renderQuiz(l) {
+  const cards=l.quiz.options.map((x,i)=>`<button class="quiz-option" data-option="${i}"><span class="quiz-emoji">${x.emoji}</span><span class="quiz-word">${x.en}</span></button>`).join("");
+  shell(3,`🎯 ${l.quiz.prompt}`,"그림을 누르면 단어를 들을 수 있어요.",`<div class="quiz-grid">${cards}</div><p id="feedback" class="feedback"></p>`,`<button class="secondary-btn" data-prev>← 이전</button><button class="primary-btn" data-next ${state.quizSolved?"":"disabled"}>완료하기 →</button>`);
+  const next=screen.querySelector("[data-next]"), feedback=screen.querySelector("#feedback");
+  screen.querySelectorAll("[data-option]").forEach(btn=>btn.onclick=()=>{
+    const x=l.quiz.options[+btn.dataset.option]; speak(x.en,{rate:.62,pitch:1.08});
+    screen.querySelectorAll(".quiz-option").forEach(el=>el.classList.remove("wrong"));
+    if(x.en===l.quiz.answer){btn.classList.add("correct");feedback.textContent="🎉 정답이에요! 정말 잘했어요!";state.quizSolved=true;next.disabled=false;}
+    else{btn.classList.add("wrong");feedback.textContent="한 번 더 찾아볼까요? 😊";}
+  });
+  screen.querySelector("[data-prev]").onclick=prevStage; next.onclick=()=>state.quizSolved&&nextStage();
+}
+function renderCompletion(l) {
+  if(!state.completedDays.includes(state.currentDay)){state.completedDays.push(state.currentDay);localStorage.setItem(completedKey,JSON.stringify(state.completedDays));renderDayNav();}
+  screen.innerHTML=`<article class="card"><div class="completion"><div class="reward">🏆</div><p class="stage-label">4단계 · 완료</p><h2>${l.label} 완료!</h2><p>오늘은 <strong>${l.theme}</strong>에 관한 영어를 배웠어요.<br>핵심 표현은 <strong>${l.pattern}</strong> 입니다.</p><div class="stars" aria-label="별 세 개">⭐ ⭐ ⭐</div><button class="primary-btn" data-review>🔁 오늘 수업 다시 하기</button></div></article>`;
+  speak("Great job! You did it!",{rate:.72,pitch:1.12});
+  screen.querySelector("[data-review]").onclick=()=>{state.stage=0;state.quizSolved=false;render();};
+}
+function nextStage(){speechSynthesis.cancel();state.stage=Math.min(state.stage+1,3);render();scrollTo({top:0,behavior:"smooth"});}
+function prevStage(){speechSynthesis.cancel();state.stage=Math.max(state.stage-1,0);render();scrollTo({top:0,behavior:"smooth"});}
+
+homeButton.onclick = () => {
+  speechSynthesis.cancel();
+  state.view = "home";
+  renderDayNav();
+  render();
+};
+renderDayNav(); render(); loadVoices();
+if ("speechSynthesis" in window) speechSynthesis.onvoiceschanged=loadVoices;
