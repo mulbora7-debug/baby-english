@@ -558,3 +558,22 @@ document.addEventListener("visibilitychange", () => {
   if (!document.hidden) refreshDailyLesson();
 });
 window.addEventListener("focus", refreshDailyLesson);
+
+let viewportFrame = 0;
+function syncViewportFrame() {
+  cancelAnimationFrame(viewportFrame);
+  viewportFrame = requestAnimationFrame(() => {
+    const viewport = window.visualViewport;
+    const visibleHeight = Math.round(viewport ? viewport.height : window.innerHeight);
+    const visibleTop = Math.round(viewport ? viewport.offsetTop : 0);
+    document.documentElement.style.setProperty("--app-height", `${visibleHeight}px`);
+    document.documentElement.style.setProperty("--viewport-top", `${visibleTop}px`);
+  });
+}
+syncViewportFrame();
+window.addEventListener("resize", syncViewportFrame, {passive:true});
+window.addEventListener("orientationchange", syncViewportFrame, {passive:true});
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", syncViewportFrame, {passive:true});
+  window.visualViewport.addEventListener("scroll", syncViewportFrame, {passive:true});
+}
