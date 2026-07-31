@@ -1,5 +1,7 @@
-const makeLesson = (label, theme, emoji, pattern, dialogues, words, prompt, answer, options) => ({
-  label, theme, emoji, pattern, dialogues, words, quiz: { prompt, answer, options }
+const makeLesson = (label, theme, emoji, pattern, dialogues, words, prompt, answer, options, focus={}) => ({
+  label, theme, emoji, pattern, dialogues, words, quiz: { prompt, answer, options },
+  phonics: focus.phonics || { letter:"I", sound:"/ɪ/", examples:"I, in" },
+  grammar: focus.grammar || pattern
 });
 const d = (speaker, icon, en, ko) => ({ speaker, icon, en, ko });
 const w = (en, ko, emoji, example) => ({ en, ko, emoji, example });
@@ -14,6 +16,11 @@ const koreanMeanings = {
   shirt:"셔츠", socks:"양말", ready:"준비된", basket:"바구니", picnic:"소풍",
   sandwich:"샌드위치", boots:"장화", umbrella:"우산", puddle:"물웅덩이",
   pajamas:"잠옷", blanket:"담요", dream:"꿈", shorts:"반바지", coat:"외투"
+  ,red:"빨강", blue:"파랑", green:"초록", ball:"공", doll:"인형", toy:"장난감",
+  nose:"코", hand:"손", eye:"눈", run:"달리다", clap:"박수치다", milk:"우유",
+  water:"물", rain:"비", cloud:"구름", wet:"젖은", circle:"동그라미", heart:"하트",
+  one:"하나", two:"둘", three:"셋", shoes:"신발", tree:"나무", flower:"꽃", leaf:"잎",
+  smile:"미소", slide:"미끄럼틀", swing:"그네", play:"놀다", box:"상자", in:"안에", night:"밤", day:"낮"
 };
 
 const lessons = {
@@ -39,10 +46,33 @@ const lessons = {
     "banana를 찾아보세요!","banana",[o("chocolate","🍫"),o("strawberry","🍓"),o("banana","🍌")])
 };
 
+const dailyExtensions = [
+  ["색깔","빨강","🔴","I see ___!",[d("A","🧒","What do you see?","무엇이 보이니?"),d("B","👧","I see red!","빨간색이 보여!")],[w("red","빨강","🔴","I see red!"),w("blue","파랑","🔵","Blue is pretty!"),w("green","초록","🟢","I see green!")],"red를 찾아보세요!","red",[o("red","🔴"),o("blue","🔵"),o("green","🟢")],{letter:"R",sound:"/r/",examples:"red, run"},"I see + 색깔"],
+  ["장난감","공","⚽","I have a ___!",[d("A","🧒","What do you have?","무엇을 가지고 있니?"),d("B","👧","I have a ball!","공을 가지고 있어!")],[w("ball","공","⚽","I have a ball!"),w("doll","인형","🪆","I have a doll!"),w("toy","장난감","🧸","This is my toy!")],"ball을 찾아보세요!","ball",[o("ball","⚽"),o("book","📕"),o("doll","🪆")],{letter:"B",sound:"/b/",examples:"ball, baby"},"I have + 물건"],
+  ["몸","손","🖐️","Touch your ___!",[d("A","🧒","Touch your nose!","코를 만져 봐!"),d("B","👧","I can touch it!","만질 수 있어!")],[w("nose","코","👃","Touch your nose!"),w("hand","손","🖐️","This is my hand!"),w("eye","눈","👀","Blink your eyes!")],"nose를 찾아보세요!","nose",[o("nose","👃"),o("hand","🖐️"),o("eye","👀")],{letter:"N",sound:"/n/",examples:"nose, nice"},"Touch your + 몸"],
+  ["움직임","뛰기","🏃","I can ___!",[d("A","🧒","Can you jump?","뛸 수 있니?"),d("B","👧","I can jump!","뛸 수 있어!")],[w("jump","뛰다","🏃","I can jump!"),w("run","달리다","🏃‍♀️","I can run!"),w("clap","박수치다","👏","I can clap!")],"jump를 찾아보세요!","jump",[o("jump","🏃"),o("sleep","😴"),o("clap","👏")],{letter:"J",sound:"/dʒ/",examples:"jump, juice"},"I can + 움직임"],
+  ["아침","물","🥛","I want ___, please!",[d("A","🧒","What do you want?","무엇을 원하니?"),d("B","👧","Milk, please!","우유 주세요!")],[w("milk","우유","🥛","Milk, please!"),w("water","물","💧","Water, please!"),w("cup","컵","🥤","My cup is blue!")],"milk를 찾아보세요!","milk",[o("milk","🥛"),o("water","💧"),o("cup","🥤")],{letter:"M",sound:"/m/",examples:"milk, more"},"___, please!"],
+  ["동물 친구","고양이","🐱","Look at the ___!",[d("A","🧒","What is that?","저것은 무엇이니?"),d("B","👧","Look at the cat!","고양이를 봐!")],[w("cat","고양이","🐱","Look at the cat!"),w("bird","새","🐦","Look at the bird!"),w("fish","물고기","🐠","Look at the fish!")],"cat을 찾아보세요!","cat",[o("cat","🐱"),o("bird","🐦"),o("fish","🐠")],{letter:"C",sound:"/k/",examples:"cat, clap"},"Look at the + 명사"],
+  ["날씨","비","🌧️","I like ___!",[d("A","🧒","Do you like rain?","비를 좋아하니?"),d("B","👧","I like rain!","나는 비를 좋아해!")],[w("rain","비","🌧️","I like rain!"),w("cloud","구름","☁️","Look at the cloud!"),w("wet","젖은","💦","My shoes are wet!")],"rain을 찾아보세요!","rain",[o("rain","🌧️"),o("sunny","☀️"),o("cloud","☁️")],{letter:"R",sound:"/r/",examples:"rain, red"},"I like + 좋아하는 것"],
+  ["모양","동그라미","⭕","It is a ___!",[d("A","🧒","What shape is it?","무슨 모양이니?"),d("B","👧","It is a circle!","동그라미야!")],[w("circle","동그라미","⭕","It is a circle!"),w("star","별","⭐","It is a star!"),w("heart","하트","💗","I see a heart!")],"circle을 찾아보세요!","circle",[o("circle","⭕"),o("star","⭐"),o("heart","💗")],{letter:"C",sound:"/s/",examples:"circle, star"},"It is a + 모양"],
+  ["숫자","하나","1️⃣","I see ___!",[d("A","🧒","How many?","몇 개니?"),d("B","👧","I see three!","세 개 보여!")],[w("one","하나","1️⃣","One apple!"),w("two","둘","2️⃣","Two shoes!"),w("three","셋","3️⃣","I see three!")],"three를 찾아보세요!","three",[o("one","1️⃣"),o("three","3️⃣"),o("two","2️⃣")],{letter:"T",sound:"/t/",examples:"two, three"},"I see + 숫자"],
+  ["옷","모자","🧢","Put on your ___!",[d("A","🧒","Is it sunny?","화창하니?"),d("B","👧","Put on your hat!","모자를 써!")],[w("hat","모자","🧢","Put on your hat!"),w("shoes","신발","👟","Put on your shoes!"),w("coat","외투","🧥","Put on your coat!")],"hat을 찾아보세요!","hat",[o("hat","🧢"),o("shoes","👟"),o("coat","🧥")],{letter:"H",sound:"/h/",examples:"hat, happy"},"Put on your + 옷"],
+  ["자연","나무","🌳","I see a ___!",[d("A","🧒","What do you see?","무엇이 보이니?"),d("B","👧","I see a tree!","나무가 보여!")],[w("tree","나무","🌳","I see a tree!"),w("flower","꽃","🌸","I see a flower!"),w("leaf","잎","🍃","A green leaf!")],"tree를 찾아보세요!","tree",[o("tree","🌳"),o("flower","🌸"),o("leaf","🍃")],{letter:"T",sound:"/t/",examples:"tree, toy"},"I see a + 명사"],
+  ["기분","행복해요","😊","I am ___!",[d("A","🧒","How do you feel?","기분이 어때?"),d("B","👧","I am happy!","나는 행복해!")],[w("happy","행복한","😊","I am happy!"),w("sad","슬픈","😢","I am not sad!"),w("smile","미소","😊","I see a smile!")],"happy를 찾아보세요!","happy",[o("happy","😊"),o("sad","😢"),o("smile","😁")],{letter:"H",sound:"/h/",examples:"happy, hello"},"I am + 기분"],
+  ["놀이터","미끄럼틀","🛝","Let's ___!",[d("A","🧒","What shall we do?","무엇을 할까?"),d("B","👧","Let's slide!","미끄럼틀 타자!")],[w("slide","미끄럼틀","🛝","Let's slide!"),w("swing","그네","🎠","Let's swing!"),w("play","놀다","🪁","Let's play!")],"slide를 찾아보세요!","slide",[o("slide","🛝"),o("swing","🎠"),o("play","🪁")],{letter:"S",sound:"/s/",examples:"slide, swing"},"Let's + 동작"],
+  ["정리","상자","📦","Put it ___!",[d("A","🧒","Where does it go?","어디에 넣을까?"),d("B","👧","Put it in!","안에 넣어!")],[w("box","상자","📦","Put it in the box!"),w("in","안에","➡️","Put it in!"),w("clean","깨끗한","🧹","Clean up, please!")],"box를 찾아보세요!","box",[o("box","📦"),o("book","📕"),o("ball","⚽")],{letter:"B",sound:"/b/",examples:"box, ball"},"Put it + in"],
+  ["잠자리","꿈","🌙","Good night!",[d("A","🧒","Are you sleepy?","졸리니?"),d("B","👧","Good night!","잘 자!")],[w("night","밤","🌙","Good night!"),w("sleep","자다","😴","I can sleep!"),w("dream","꿈","💭","Sweet dream!")],"night를 찾아보세요!","night",[o("night","🌙"),o("day","☀️"),o("sleep","😴")],{letter:"N",sound:"/n/",examples:"night, nose"},"Good + 시간 인사"]
+];
+dailyExtensions.forEach((item, index) => {
+  const [theme, label, emoji, pattern, dialogues, words, prompt, answer, options, phonics, grammar] = item;
+  lessons[`day${index + 6}`] = makeLesson(`Day ${index + 6}`, theme, emoji, pattern, dialogues, words, prompt, answer, options, {phonics, grammar});
+});
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const anchorDay = Math.floor(Date.UTC(2026, 6, 31) / DAY_MS);
 const lessonKeys = Object.keys(lessons);
 const completedKey = "babyEnglishCompletedDates";
 const legacyCompletedKey = "babyEnglishCompleted";
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 function localDateKey(date = new Date()) {
   const year = date.getFullYear();
@@ -54,7 +84,8 @@ function dayNumber(date = new Date()) {
   return Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / DAY_MS);
 }
 function lessonKeyFor(date = new Date()) {
-  return lessonKeys[((dayNumber(date) % lessonKeys.length) + lessonKeys.length) % lessonKeys.length];
+  const offset = dayNumber(date) - anchorDay;
+  return lessonKeys[((offset % lessonKeys.length) + lessonKeys.length) % lessonKeys.length];
 }
 function formatToday(date = new Date()) {
   return new Intl.DateTimeFormat("ko-KR", {
@@ -600,7 +631,8 @@ function shell(step,title,description,content,actions) {
 }
 function renderDialogue(l) {
   const cards = l.dialogues.map((x,i) => `<section class="dialogue-card"><div class="dialogue-head"><span class="character">${x.icon}</span><strong>${x.speaker} 친구</strong></div><p class="dialogue-en">${x.en}</p><p class="dialogue-ko">${x.ko}</p><div class="audio-row"><button class="control-btn" data-a="sentence" data-i="${i}">🔊 문장 듣기</button><button class="control-btn slow" data-a="slow" data-i="${i}">🐢 천천히</button><button class="control-btn korean" data-a="ko" data-i="${i}">🇰🇷 뜻 듣기</button></div></section>`).join("");
-  shell(1,`${l.emoji} ${l.theme} 영어`,`먼저 영어 문장을 듣고 천천히 다시 들어보세요. 오늘의 표현은 <strong>${l.pattern}</strong> 입니다.`,`<div class="dialogue-list">${cards}</div>`,`<button class="primary-btn" data-next>오늘의 단어 보기 →</button>`);
+  const focus = `<div class="lesson-focus-grid"><article class="focus-card phonics-card"><span>🔤</span><strong>소리 놀이</strong><b>${l.phonics.letter} says ${l.phonics.sound}</b><small>${l.phonics.examples}</small></article><article class="focus-card grammar-card"><span>💬</span><strong>문장 놀이</strong><b>${l.grammar}</b><small>말해 보아요!</small></article></div>`;
+  shell(1,`${l.emoji} ${l.theme} 영어`,`영어를 듣고 따라 해보아요. 오늘의 표현은 <strong>${l.pattern}</strong> 입니다.`,`<div class="dialogue-list">${cards}</div>${focus}`,`<button class="primary-btn" data-next>오늘의 단어 보기 →</button>`);
   screen.querySelectorAll("[data-a]").forEach(btn => btn.onclick = () => {
     const x=l.dialogues[+btn.dataset.i];
     if(btn.dataset.a==="sentence") speak(x.en);
