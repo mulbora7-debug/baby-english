@@ -91,6 +91,7 @@ const screen = document.getElementById("screen");
 const dayNav = document.getElementById("day-nav");
 const homeButton = document.getElementById("home-btn");
 const header = document.querySelector(".header");
+const appShell = document.querySelector(".app-shell");
 const progressWrap = document.getElementById("progress-wrap");
 let voices = [];
 let speechRunId = 0;
@@ -357,6 +358,7 @@ function render() {
     renderHome();
     return;
   }
+  appShell.classList.remove("home-view");
   header.classList.remove("home-header-hidden");
   header.append(progressWrap);
   if (state.view.startsWith("story:")) {
@@ -372,6 +374,7 @@ function render() {
   [renderDialogue,renderWords,renderQuiz,renderCompletion][state.stage](lessons[state.currentDay]);
 }
 function renderHome() {
+  appShell.classList.add("home-view");
   header.classList.add("home-header-hidden");
   dayNav.hidden = true;
   const dailyLesson = lessons[state.currentDay];
