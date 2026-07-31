@@ -90,6 +90,7 @@ const stageNames = ["대화 듣기","오늘의 단어","그림 퀴즈","완료"]
 const screen = document.getElementById("screen");
 const dayNav = document.getElementById("day-nav");
 const homeButton = document.getElementById("home-btn");
+const header = document.querySelector(".header");
 const progressWrap = document.getElementById("progress-wrap");
 let voices = [];
 let speechRunId = 0;
@@ -356,6 +357,8 @@ function render() {
     renderHome();
     return;
   }
+  header.classList.remove("home-header-hidden");
+  header.append(progressWrap);
   if (state.view.startsWith("story:")) {
     renderStoryPreview(state.view.split(":")[1]);
     return;
@@ -369,14 +372,14 @@ function render() {
   [renderDialogue,renderWords,renderQuiz,renderCompletion][state.stage](lessons[state.currentDay]);
 }
 function renderHome() {
-  progressWrap.hidden = true;
+  header.classList.add("home-header-hidden");
   dayNav.hidden = true;
   const dailyLesson = lessons[state.currentDay];
   const done = state.completedDates.includes(state.todayKey);
   const streak = learningStreak(state.completedDates);
   screen.innerHTML = `
     <div class="menu-intro">
-      <h2>오늘은 어떤 이야기를 만날까요?</h2>
+      <div class="home-heading-row"><h2>오늘은 어떤 이야기를 만날까요?</h2><div id="home-progress-slot"></div></div>
       <p>${formatToday()} · ${done ? "오늘 학습을 완료했어요! ⭐" : "하루 5분, 즐겁게 시작해요."}${streak ? ` · 🔥 ${streak}일 연속` : ""}</p>
     </div>
     <div class="menu-grid">
@@ -401,6 +404,11 @@ function renderHome() {
         <span class="menu-arrow">›</span>
       </button>
     </div>`;
+  const homeProgressSlot = screen.querySelector("#home-progress-slot");
+  homeProgressSlot.append(progressWrap);
+  progressWrap.hidden = false;
+  document.getElementById("progress-bar").style.width = `${(state.stage+1)*25}%`;
+  document.getElementById("progress-text").textContent = `${state.stage+1} / 4`;
   screen.querySelectorAll("[data-menu]").forEach(button => {
     button.onclick = () => {
       state.view = button.dataset.menu;
