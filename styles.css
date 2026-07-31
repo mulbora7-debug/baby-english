@@ -4,7 +4,7 @@
   --shadow:0 14px 32px rgba(168,85,247,.13);
 }
 * { box-sizing:border-box; }
-html { -webkit-tap-highlight-color:transparent; }
+html { height:100%; -webkit-tap-highlight-color:transparent; }
 body {
   margin:0; min-height:100vh; font-family:"Segoe UI","Noto Sans KR",sans-serif;
   background:
@@ -203,6 +203,93 @@ h1 { margin:0; color:#9d174d; font-size:clamp(1.65rem,6vw,2.2rem); text-shadow:0
   .story-lines { grid-template-columns:repeat(2,1fr); }
   .story-line:last-child:nth-child(odd) { grid-column:1/-1; }
   .episode-list { grid-template-columns:repeat(2,1fr); }
+}
+@media (min-width:700px) and (orientation:landscape) and (max-height:900px) {
+  html,body { width:100%; height:100%; overflow:hidden; }
+  body { min-height:0; }
+  .app-shell {
+    position:fixed; inset:0; display:flex; flex-direction:column;
+    width:min(100%,1280px); height:100vh;
+    height:100dvh; padding:10px 18px 12px; overflow:hidden;
+  }
+  .header {
+    position:relative; flex:0 0 58px; display:flex; flex-direction:column;
+    justify-content:center; margin:0; padding:0 270px 0 150px;
+  }
+  .home-btn {
+    position:absolute; left:0; top:8px; min-height:42px; margin:0;
+  }
+  .eyebrow { margin:0; font-size:.78rem; line-height:1.1; }
+  h1 { font-size:1.55rem; line-height:1.2; }
+  .progress-wrap {
+    position:absolute; right:0; top:13px; width:250px; margin:0;
+    font-size:.86rem;
+  }
+  .day-nav { flex:0 0 46px; padding:2px 0 6px; overflow:hidden; }
+  .today-strip { min-height:40px; padding:5px 14px; border-radius:14px; }
+  .screen {
+    flex:1 1 auto; min-height:0; height:auto; overflow:hidden;
+    overscroll-behavior:contain;
+  }
+  .screen > .card {
+    height:100%; max-height:100%; padding:16px 20px;
+    overflow-y:auto; overscroll-behavior:contain;
+    scrollbar-gutter:stable;
+  }
+  .menu-intro { margin:0 0 10px; }
+  .menu-intro h2 { margin-bottom:3px; font-size:1.42rem; }
+  .menu-intro p { font-size:.9rem; line-height:1.3; }
+  .menu-grid { height:calc(100% - 58px); gap:12px; }
+  .menu-card {
+    grid-template-rows:62px 1fr 20px; min-height:0; height:100%;
+    padding:13px; border-radius:24px;
+  }
+  .menu-emoji { font-size:3.35rem; }
+  .menu-copy strong { font-size:1.15rem; }
+  .menu-copy span { font-size:.86rem; line-height:1.3; }
+  .menu-arrow { font-size:1.35rem; line-height:1; }
+  .stage-label { margin-bottom:3px; font-size:.82rem; }
+  .stage-title { font-size:1.4rem; }
+  .stage-description { margin:4px 0 10px; font-size:.88rem; line-height:1.35; }
+  .dialogue-list { gap:10px; }
+  .dialogue-card { padding:12px; border-radius:18px; }
+  .dialogue-head { gap:7px; }
+  .character { width:34px; height:34px; }
+  .dialogue-en { margin:7px 0 3px; font-size:1.16rem; line-height:1.25; }
+  .dialogue-ko { margin:0 0 8px; font-size:.87rem; }
+  .control-btn,.primary-btn,.secondary-btn { min-height:44px; border-radius:13px; }
+  .audio-row { gap:7px; }
+  .word-grid,.quiz-grid { gap:10px; }
+  .word-card,.quiz-option { min-height:0; padding:10px 8px; border-radius:19px; }
+  .word-emoji,.quiz-emoji { font-size:3rem; margin-bottom:2px; }
+  .word-en { font-size:1.2rem; }
+  .word-ko { font-size:.86rem; }
+  .word-audio-row { margin-top:7px; }
+  .word-audio-row button,.choice-audio-row button { min-height:38px; padding:0 8px; }
+  .actions {
+    position:sticky; bottom:-16px; z-index:3; margin:10px -4px -16px;
+    padding:9px 4px 8px; background:linear-gradient(180deg,rgba(255,250,253,.25),#fffafd 30%);
+  }
+  .notice { margin-top:8px; padding:9px 12px; font-size:.82rem; line-height:1.35; }
+  .completion { padding:4px 8px; }
+  .reward { font-size:4.3rem; }
+  .completion h2 { margin:5px 0; font-size:1.6rem; }
+  .completion p { margin:6px 0; line-height:1.35; }
+  .stars { margin:9px 0; font-size:2rem; }
+  .streak-message { margin-bottom:10px!important; padding:8px 14px; }
+  .story-back { min-height:36px; margin-bottom:7px; }
+  .read-story-box { margin:10px 0; padding:10px; }
+  .story-lines { gap:8px; margin:10px 0; }
+  .story-line { padding:10px; }
+  .phrase-box { padding:12px; }
+  .story-heading { margin:14px 0 8px; }
+  .mini-word { min-height:110px; padding:8px 6px; }
+  .mini-word span { font-size:2rem; }
+  .mini-audio-row { margin-top:6px; }
+  .mini-audio-row button { min-height:36px; padding:0 8px; font-size:.8rem; }
+  .story-quiz { margin-top:14px; }
+  .episode-list { gap:8px; margin-top:10px; }
+  .episode-item { padding:10px; }
 }
 @media (max-width:500px) {
   .app-shell { padding:20px 16px 44px; }
