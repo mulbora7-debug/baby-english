@@ -28,10 +28,52 @@ const lessons = {
     "banana를 찾아보세요!","banana",[o("chocolate","🍫"),o("strawberry","🍓"),o("banana","🍌")])
 };
 
-const completedKey = "babyEnglishCompleted";
+const lessonKeys = Object.keys(lessons);
+const completedKey = "babyEnglishCompletedDates";
+const legacyCompletedKey = "babyEnglishCompleted";
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function localDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+function dayNumber(date = new Date()) {
+  return Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / DAY_MS);
+}
+function lessonKeyFor(date = new Date()) {
+  return lessonKeys[((dayNumber(date) % lessonKeys.length) + lessonKeys.length) % lessonKeys.length];
+}
+function formatToday(date = new Date()) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "long", day: "numeric", weekday: "short"
+  }).format(date);
+}
+function loadCompletedDates() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(completedKey) || "[]");
+    return Array.isArray(saved) ? saved : [];
+  } catch {
+    return [];
+  }
+}
+function learningStreak(completedDates, today = new Date()) {
+  const completed = new Set(completedDates);
+  const cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  if (!completed.has(localDateKey(cursor))) cursor.setDate(cursor.getDate() - 1);
+  let streak = 0;
+  while (completed.has(localDateKey(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+localStorage.removeItem(legacyCompletedKey);
 const state = {
-  view: "home", currentDay: "day1", stage: 0, quizSolved: false,
-  completedDays: JSON.parse(localStorage.getItem(completedKey) || "[]")
+  view: "home", currentDay: lessonKeyFor(), todayKey: localDateKey(), stage: 0, quizSolved: false,
+  completedDates: loadCompletedDates()
 };
 const stageNames = ["대화 듣기","오늘의 단어","그림 퀴즈","완료"];
 const screen = document.getElementById("screen");
@@ -163,9 +205,17 @@ const storyLessons = {
 function loadVoices() { voices = window.speechSynthesis?.getVoices() || []; }
 function voiceFor(lang) {
   const candidates = voices.filter(v => v.lang.toLowerCase().startsWith(lang.toLowerCase()));
-  return candidates.find(v => /google|microsoft|samantha|zira|jenny|aria/i.test(v.name)) || candidates[0] || null;
+  const score = voice => {
+    const name = voice.name.toLowerCase();
+    let points = voice.localService ? 2 : 0;
+    if (/natural|premium|enhanced|neural/.test(name)) points += 12;
+    if (/google|microsoft/.test(name)) points += 6;
+    if (/samantha|ava|jenny|aria|sunhi|yuna/.test(name)) points += 5;
+    return points;
+  };
+  return candidates.sort((a,b) => score(b) - score(a))[0] || null;
 }
-function utter(text, { lang="en-US", rate=.78, pitch=1.05 }={}) {
+function utter(text, { lang="en-US", rate=.8, pitch=1 }={}) {
   const u = new SpeechSynthesisUtterance(text);
   Object.assign(u, { lang, rate, pitch, volume:1 });
   const voice = voiceFor(lang.split("-")[0]);
@@ -177,12 +227,12 @@ function speak(text, options={}) {
   speechSynthesis.cancel();
   speechSynthesis.speak(utter(text, options));
 }
-function speakSlow(text) { speak(text.replace(/[!?.,]/g,"").split(/\s+/).join(" ... "), { rate:.58 }); }
+function speakSlow(text) { speak(text, { rate:.64, pitch:1 }); }
 function playWord(word, example) {
   speechSynthesis.cancel();
-  const queue = [utter(word,{rate:.58,pitch:1.08}),utter(word,{rate:.58,pitch:1.08}),utter(example,{rate:.7,pitch:1.04})];
-  queue[0].onend = () => setTimeout(() => speechSynthesis.speak(queue[1]),250);
-  queue[1].onend = () => setTimeout(() => speechSynthesis.speak(queue[2]),350);
+  const queue = [utter(word,{rate:.64}),utter(word,{rate:.64}),utter(example,{rate:.74})];
+  queue[0].onend = () => setTimeout(() => speechSynthesis.speak(queue[1]),220);
+  queue[1].onend = () => setTimeout(() => speechSynthesis.speak(queue[2]),300);
   speechSynthesis.speak(queue[0]);
 }
 function renderDayNav() {
@@ -192,13 +242,14 @@ function renderDayNav() {
     return;
   }
   dayNav.hidden = false;
-  dayNav.innerHTML = Object.entries(lessons).map(([key,l]) =>
-    `<button class="day-btn ${key===state.currentDay?"active":""} ${state.completedDays.includes(key)?"done":""}" data-day="${key}">${l.label}</button>`
-  ).join("");
-  dayNav.querySelectorAll("[data-day]").forEach(btn => btn.onclick = () => {
-    Object.assign(state,{currentDay:btn.dataset.day,stage:0,quizSolved:false});
-    speechSynthesis.cancel(); renderDayNav(); render();
-  });
+  const done = state.completedDates.includes(state.todayKey);
+  const streak = learningStreak(state.completedDates);
+  dayNav.innerHTML = `
+    <div class="today-strip">
+      <span>📅 ${formatToday()}</span>
+      <strong>${done ? "⭐ 오늘 학습 완료" : "🌱 오늘의 수업"}</strong>
+      <span>🔥 ${streak}일 연속</span>
+    </div>`;
 }
 function updateProgress() {
   progressWrap.hidden = state.view !== "lesson";
@@ -227,15 +278,18 @@ function render() {
 function renderHome() {
   progressWrap.hidden = true;
   dayNav.hidden = true;
+  const dailyLesson = lessons[state.currentDay];
+  const done = state.completedDates.includes(state.todayKey);
+  const streak = learningStreak(state.completedDates);
   screen.innerHTML = `
     <div class="menu-intro">
       <h2>오늘은 어떤 이야기를 만날까요?</h2>
-      <p>크고 예쁜 카드를 하나 골라 주세요.</p>
+      <p>${formatToday()} · ${done ? "오늘 학습을 완료했어요! ⭐" : "하루 5분, 즐겁게 시작해요."}${streak ? ` · 🔥 ${streak}일 연속` : ""}</p>
     </div>
     <div class="menu-grid">
       <button class="menu-card" data-menu="lesson">
-        <span class="menu-emoji">🎈</span>
-        <span class="menu-copy"><strong>오늘의 영어</strong><span>동물, 과일, 날씨를 짧게 배워요</span></span>
+        <span class="menu-emoji">${dailyLesson.emoji}</span>
+        <span class="menu-copy"><strong>오늘의 영어 · ${dailyLesson.theme}</strong><span>${dailyLesson.pattern} · ${dailyLesson.words.map(word => word.en).join(", ")}${done ? " · 완료 ⭐" : ""}</span></span>
         <span class="menu-arrow">›</span>
       </button>
       <button class="menu-card story" data-menu="story:cinderella">
@@ -364,7 +418,7 @@ function renderDialogue(l) {
     const x=l.dialogues[+btn.dataset.i];
     if(btn.dataset.a==="sentence") speak(x.en);
     if(btn.dataset.a==="slow") speakSlow(x.en);
-    if(btn.dataset.a==="ko") speak(x.ko,{lang:"ko-KR",rate:.78,pitch:1});
+    if(btn.dataset.a==="ko") speak(x.ko,{lang:"ko-KR",rate:.8,pitch:1});
   });
   screen.querySelector("[data-next]").onclick=nextStage;
 }
@@ -387,9 +441,14 @@ function renderQuiz(l) {
   screen.querySelector("[data-prev]").onclick=prevStage; next.onclick=()=>state.quizSolved&&nextStage();
 }
 function renderCompletion(l) {
-  if(!state.completedDays.includes(state.currentDay)){state.completedDays.push(state.currentDay);localStorage.setItem(completedKey,JSON.stringify(state.completedDays));renderDayNav();}
-  screen.innerHTML=`<article class="card"><div class="completion"><div class="reward">🏆</div><p class="stage-label">4단계 · 완료</p><h2>${l.label} 완료!</h2><p>오늘은 <strong>${l.theme}</strong>에 관한 영어를 배웠어요.<br>핵심 표현은 <strong>${l.pattern}</strong> 입니다.</p><div class="stars" aria-label="별 세 개">⭐ ⭐ ⭐</div><button class="primary-btn" data-review>🔁 오늘 수업 다시 하기</button></div></article>`;
-  speak("Great job! You did it!",{rate:.72,pitch:1.12});
+  if(!state.completedDates.includes(state.todayKey)){
+    state.completedDates.push(state.todayKey);
+    localStorage.setItem(completedKey,JSON.stringify(state.completedDates));
+    renderDayNav();
+  }
+  const streak = learningStreak(state.completedDates);
+  screen.innerHTML=`<article class="card"><div class="completion"><div class="reward">🏆</div><p class="stage-label">4단계 · 오늘 학습 완료</p><h2>${l.theme} 영어 완료!</h2><p>오늘은 <strong>${l.theme}</strong>에 관한 영어를 배웠어요.<br>핵심 표현은 <strong>${l.pattern}</strong> 입니다.</p><div class="stars" aria-label="별 세 개">⭐ ⭐ ⭐</div><p class="streak-message">🔥 ${streak}일 연속 학습했어요!<br><small>내일은 새로운 영어가 기다리고 있어요.</small></p><button class="primary-btn" data-review>🔁 오늘 수업 다시 하기</button></div></article>`;
+  speak("Great job! You did it!",{rate:.76,pitch:1.02});
   screen.querySelector("[data-review]").onclick=()=>{state.stage=0;state.quizSolved=false;render();};
 }
 function nextStage(){speechSynthesis.cancel();state.stage=Math.min(state.stage+1,3);render();scrollTo({top:0,behavior:"smooth"});}
@@ -403,3 +462,18 @@ homeButton.onclick = () => {
 };
 renderDayNav(); render(); loadVoices();
 if ("speechSynthesis" in window) speechSynthesis.onvoiceschanged=loadVoices;
+
+function refreshDailyLesson() {
+  const newTodayKey = localDateKey();
+  if (newTodayKey === state.todayKey) return;
+  Object.assign(state, {
+    view:"home", currentDay:lessonKeyFor(), todayKey:newTodayKey, stage:0, quizSolved:false
+  });
+  speechSynthesis.cancel();
+  renderDayNav();
+  render();
+}
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) refreshDailyLesson();
+});
+window.addEventListener("focus", refreshDailyLesson);
