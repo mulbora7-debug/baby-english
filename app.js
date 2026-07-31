@@ -10,7 +10,10 @@ const koreanMeanings = {
   car:"자동차", chocolate:"초콜릿", strawberry:"딸기", help:"돕다", sleep:"자다",
   eat:"먹다", hat:"모자", dress:"드레스", bag:"가방", clock:"시계", star:"별",
   moon:"달", shoe:"신발", cup:"컵", book:"책", fish:"물고기", bird:"새",
-  shell:"조개", sit:"앉다", jump:"뛰다", sad:"슬픈", angry:"화난", happy:"행복한"
+  shell:"조개", sit:"앉다", jump:"뛰다", sad:"슬픈", angry:"화난", happy:"행복한",
+  shirt:"셔츠", socks:"양말", ready:"준비된", basket:"바구니", picnic:"소풍",
+  sandwich:"샌드위치", boots:"장화", umbrella:"우산", puddle:"물웅덩이",
+  pajamas:"잠옷", blanket:"담요", dream:"꿈", shorts:"반바지", coat:"외투"
 };
 
 const lessons = {
@@ -113,6 +116,17 @@ const storyPlans = {
       ["🐬","돌고래 친구","Let’s play! · friend, jump, play"],
       ["🌊","집으로 가는 길","I am happy! · home, happy, together"]
     ]
+  },
+  bebe: {
+    title: "베베코알라의 포근한 하루",
+    emoji: "🐨",
+    description: "옷 입기, 소풍, 비 오는 날, 잠자리 표현을 배우는 일상 이야기",
+    episodes: [
+      ["👚","혼자 준비해요","I am ready! · shirt, socks, ready"],
+      ["🧺","즐거운 소풍","Let’s have a picnic! · basket, picnic, sandwich"],
+      ["☔","빗방울 놀이","I see a puddle! · boots, umbrella, puddle"],
+      ["🌙","별빛 잠옷","Sweet dreams! · pajamas, blanket, dream"]
+    ]
   }
 };
 
@@ -207,6 +221,52 @@ const storyLessons = {
       phrase:"I am happy!",
       words:[["home","집","🏠"],["happy","행복한","😊"],["together","함께","👭"]],
       quiz:{prompt:"happy를 찾아보세요!",answer:"happy",options:[["sad","😢"],["angry","😠"],["happy","😊"]]}
+    }
+  ],
+  bebe: [
+    {
+      title:"혼자 준비해요", icon:"👚",
+      lines:[
+        ["Baby Koala chooses a pink shirt.","베베코알라는 분홍색 셔츠를 골라요."],
+        ["She puts on her soft socks.","부드러운 양말을 신어요."],
+        ["I am ready!","준비됐어요!"]
+      ],
+      phrase:"I am ready!",
+      words:[["shirt","셔츠","👚"],["socks","양말","🧦"],["ready","준비된","✨"]],
+      quiz:{prompt:"shirt를 찾아보세요!",answer:"shirt",options:[["hat","👒"],["shirt","👚"],["shorts","🩳"]]}
+    },
+    {
+      title:"즐거운 소풍", icon:"🧺",
+      lines:[
+        ["Baby Koala packs a little basket.","베베코알라는 작은 바구니를 챙겨요."],
+        ["She has a tasty sandwich.","맛있는 샌드위치도 있어요."],
+        ["Let's have a picnic!","소풍을 즐겨요!"]
+      ],
+      phrase:"Let's have a picnic!",
+      words:[["basket","바구니","🧺"],["picnic","소풍","🌳"],["sandwich","샌드위치","🥪"]],
+      quiz:{prompt:"basket을 찾아보세요!",answer:"basket",options:[["basket","🧺"],["cup","🥤"],["book","📕"]]}
+    },
+    {
+      title:"빗방울 놀이", icon:"☔",
+      lines:[
+        ["Baby Koala wears yellow boots.","베베코알라는 노란 장화를 신어요."],
+        ["She opens a purple umbrella.","보라색 우산을 펼쳐요."],
+        ["I see a puddle!","물웅덩이가 보여요!"]
+      ],
+      phrase:"I see a puddle!",
+      words:[["boots","장화","🥾"],["umbrella","우산","☔"],["puddle","물웅덩이","💧"]],
+      quiz:{prompt:"umbrella를 찾아보세요!",answer:"umbrella",options:[["coat","🧥"],["umbrella","☔"],["boots","🥾"]]}
+    },
+    {
+      title:"별빛 잠옷", icon:"🌙",
+      lines:[
+        ["Baby Koala puts on star pajamas.","베베코알라는 별무늬 잠옷을 입어요."],
+        ["She hugs a soft blanket.","부드러운 담요를 꼭 안아요."],
+        ["Sweet dreams, Baby Koala!","좋은 꿈 꿔요, 베베코알라!"]
+      ],
+      phrase:"Sweet dreams!",
+      words:[["pajamas","잠옷","🌟"],["blanket","담요","🛏️"],["dream","꿈","💭"]],
+      quiz:{prompt:"pajamas를 찾아보세요!",answer:"pajamas",options:[["dress","👗"],["pajamas","🌟"],["coat","🧥"]]}
     }
   ]
 };
@@ -333,6 +393,11 @@ function renderHome() {
       <button class="menu-card sea" data-menu="story:mermaid">
         <span class="menu-emoji">🧜‍♀️</span>
         <span class="menu-copy"><strong>인어공주 이야기</strong><span>바닷속 친구들과 신나는 영어 모험</span></span>
+        <span class="menu-arrow">›</span>
+      </button>
+      <button class="menu-card koala" data-menu="story:bebe">
+        <span class="menu-emoji">🐨</span>
+        <span class="menu-copy"><strong>베베코알라 이야기</strong><span>포근한 일상에서 만나는 쉬운 영어</span></span>
         <span class="menu-arrow">›</span>
       </button>
     </div>`;

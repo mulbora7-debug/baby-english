@@ -52,6 +52,7 @@ h1 { margin:0; color:#9d174d; font-size:clamp(1.65rem,6vw,2.2rem); text-shadow:0
 }
 .menu-card.story { border-color:#d8b4fe; background:linear-gradient(135deg,#fff,#faf5ff); }
 .menu-card.sea { border-color:#c4b5fd; background:linear-gradient(135deg,#fff,#f5f3ff); }
+.menu-card.koala { border-color:#f9a8d4; background:linear-gradient(135deg,#fff,#fff1f7); }
 .menu-emoji { display:grid; place-items:center; font-size:4.5rem; }
 .menu-copy strong { display:block; color:#9d174d; font-size:1.35rem; margin-bottom:5px; }
 .menu-copy span { color:var(--subtext); font-weight:700; line-height:1.45; }
@@ -189,7 +190,7 @@ h1 { margin:0; color:#9d174d; font-size:clamp(1.65rem,6vw,2.2rem); text-shadow:0
   .progress-wrap { margin-top:12px; }
   .screen { min-height:420px; }
   .menu-intro { margin:4px 0 16px; }
-  .menu-grid { grid-template-columns:repeat(3,1fr); }
+  .menu-grid { grid-template-columns:repeat(4,1fr); }
   .menu-card {
     grid-template-columns:1fr; grid-template-rows:76px 1fr auto;
     min-height:245px; gap:10px; text-align:center;
