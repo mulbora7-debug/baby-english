@@ -382,7 +382,7 @@ function renderHome() {
   const streak = learningStreak(state.completedDates);
   screen.innerHTML = `
     <div class="menu-intro">
-      <div class="home-heading-row"><h2>오늘은 어떤 이야기를 만날까요?</h2><div id="home-progress-slot"></div></div>
+      <div class="home-heading-row"><h2>오늘은 어떤 이야기를 만날까요?</h2></div>
       <p>${formatToday()} · ${done ? "오늘 학습을 완료했어요! ⭐" : "하루 5분, 즐겁게 시작해요."}${streak ? ` · 🔥 ${streak}일 연속` : ""}</p>
     </div>
     <div class="menu-grid">
@@ -406,7 +406,8 @@ function renderHome() {
         <span class="menu-copy"><strong>베베코알라 이야기</strong><span>포근한 일상에서 만나는 쉬운 영어</span></span>
         <span class="menu-arrow">›</span>
       </button>
-    </div>`;
+    </div>
+    <div id="home-progress-slot" class="home-progress-bottom"></div>`;
   const homeProgressSlot = screen.querySelector("#home-progress-slot");
   homeProgressSlot.append(progressWrap);
   progressWrap.hidden = false;
