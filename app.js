@@ -4,6 +4,14 @@ const makeLesson = (label, theme, emoji, pattern, dialogues, words, prompt, answ
 const d = (speaker, icon, en, ko) => ({ speaker, icon, en, ko });
 const w = (en, ko, emoji, example) => ({ en, ko, emoji, example });
 const o = (en, emoji) => ({ en, emoji });
+const koreanMeanings = {
+  cat:"고양이", panda:"판다", dog:"강아지", banana:"바나나", apple:"사과", grape:"포도",
+  rainy:"비 오는", snowy:"눈 오는", sunny:"화창한", bus:"버스", "fire truck":"소방차",
+  car:"자동차", chocolate:"초콜릿", strawberry:"딸기", help:"돕다", sleep:"자다",
+  eat:"먹다", hat:"모자", dress:"드레스", bag:"가방", clock:"시계", star:"별",
+  moon:"달", shoe:"신발", cup:"컵", book:"책", fish:"물고기", bird:"새",
+  shell:"조개", sit:"앉다", jump:"뛰다", sad:"슬픈", angry:"화난", happy:"행복한"
+};
 
 const lessons = {
   day1: makeLesson("Day 1","동물","🐼","I like ___!",
@@ -81,6 +89,7 @@ const dayNav = document.getElementById("day-nav");
 const homeButton = document.getElementById("home-btn");
 const progressWrap = document.getElementById("progress-wrap");
 let voices = [];
+let speechRunId = 0;
 
 const storyPlans = {
   cinderella: {
@@ -224,15 +233,39 @@ function utter(text, { lang="en-US", rate=.8, pitch=1 }={}) {
 }
 function speak(text, options={}) {
   if (!("speechSynthesis" in window)) return alert("이 브라우저는 음성 재생을 지원하지 않습니다.");
+  speechRunId += 1;
   speechSynthesis.cancel();
   speechSynthesis.speak(utter(text, options));
 }
+function stopSpeech() {
+  speechRunId += 1;
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+}
 function speakSlow(text) { speak(text, { rate:.64, pitch:1 }); }
+function speakSequence(items, { lang="en-US", rate=.76 }={}) {
+  if (!("speechSynthesis" in window)) return alert("이 브라우저는 음성 재생을 지원하지 않습니다.");
+  const runId = ++speechRunId;
+  speechSynthesis.cancel();
+  const queue = items.map(text => utter(text, {lang,rate,pitch:1}));
+  queue.forEach((item,index) => {
+    if (index < queue.length - 1) {
+      item.onend = () => setTimeout(() => {
+        if (runId === speechRunId) speechSynthesis.speak(queue[index + 1]);
+      }, 320);
+    }
+  });
+  if (queue[0]) speechSynthesis.speak(queue[0]);
+}
 function playWord(word, example) {
+  const runId = ++speechRunId;
   speechSynthesis.cancel();
   const queue = [utter(word,{rate:.64}),utter(word,{rate:.64}),utter(example,{rate:.74})];
-  queue[0].onend = () => setTimeout(() => speechSynthesis.speak(queue[1]),220);
-  queue[1].onend = () => setTimeout(() => speechSynthesis.speak(queue[2]),300);
+  queue[0].onend = () => setTimeout(() => {
+    if (runId === speechRunId) speechSynthesis.speak(queue[1]);
+  },220);
+  queue[1].onend = () => setTimeout(() => {
+    if (runId === speechRunId) speechSynthesis.speak(queue[2]);
+  },300);
   speechSynthesis.speak(queue[0]);
 }
 function renderDayNav() {
@@ -346,26 +379,50 @@ function renderStoryEpisode(key,index) {
     <section class="story-line">
       <span class="story-line-icon">${lineIndex === lesson.lines.length - 1 ? "💬" : lesson.icon}</span>
       <span class="story-line-copy"><strong>${en}</strong><span>${ko}</span></span>
-      <button class="line-audio" data-line="${lineIndex}" aria-label="${en} 듣기">🔊</button>
+      <span class="line-audio-pair">
+        <button class="line-audio en" data-line="${lineIndex}" data-lang="en" aria-label="${en} 영어로 듣기">🇺🇸</button>
+        <button class="line-audio ko" data-line="${lineIndex}" data-lang="ko" aria-label="${ko} 한국어로 듣기">🇰🇷</button>
+      </span>
     </section>`).join("");
   const words = lesson.words.map(([en,ko,emoji],wordIndex) => `
-    <button class="mini-word" data-story-word="${wordIndex}">
+    <article class="mini-word">
       <span>${emoji}</span><strong>${en}</strong><small>${ko}</small>
-    </button>`).join("");
+      <span class="mini-audio-row">
+        <button data-story-word="${wordIndex}" data-lang="en" aria-label="${en} 영어로 듣기">🇺🇸 영어</button>
+        <button data-story-word="${wordIndex}" data-lang="ko" aria-label="${ko} 한국어로 듣기">🇰🇷 한국어</button>
+      </span>
+    </article>`).join("");
   const options = lesson.quiz.options.map(([en,emoji],optionIndex) => `
-    <button class="story-quiz-option" data-story-option="${optionIndex}">
-      <span>${emoji}</span><strong>${en}</strong>
-    </button>`).join("");
+    <article class="quiz-choice story-choice">
+      <button class="story-quiz-option" data-story-option="${optionIndex}">
+        <span>${emoji}</span><strong>${en}</strong>
+      </button>
+      <span class="choice-audio-row">
+        <button data-story-option-audio="${optionIndex}" data-lang="en">🇺🇸</button>
+        <button data-story-option-audio="${optionIndex}" data-lang="ko">🇰🇷</button>
+      </span>
+    </article>`).join("");
+  const phraseTranslation = lesson.lines.find(([en]) => en.replace(/[.!?]/g,"").toLowerCase() === lesson.phrase.replace(/[.!?]/g,"").toLowerCase())?.[1] || "오늘의 한마디";
   screen.innerHTML = `
     <article class="card story-lesson">
       <button class="story-back" data-story-back>← ${plan.title}</button>
       <p class="stage-label">에피소드 ${index + 1} · 3~5분 이야기</p>
       <h2 class="stage-title">${lesson.icon} ${lesson.title}</h2>
+      <section class="read-story-box">
+        <span class="read-story-icon">📖</span>
+        <span><strong>이야기 전체 듣기</strong><small>처음부터 차례로 읽어줄게요.</small></span>
+        <button data-read-story="en">🇺🇸 영어 이야기</button>
+        <button data-read-story="ko">🇰🇷 한국어 이야기</button>
+      </section>
       <div class="story-lines">${lines}</div>
       <section class="phrase-box">
         <span>오늘의 한마디</span>
         <strong>${lesson.phrase}</strong>
-        <button data-phrase>🔊 천천히 듣기</button>
+        <small>${phraseTranslation}</small>
+        <span class="phrase-audio-row">
+          <button data-phrase="en">🇺🇸 영어로 듣기</button>
+          <button data-phrase="ko">🇰🇷 한국어로 듣기</button>
+        </span>
       </section>
       <h3 class="story-heading">⭐ 이야기 속 단어</h3>
       <div class="mini-word-grid">${words}</div>
@@ -377,18 +434,38 @@ function renderStoryEpisode(key,index) {
       <div class="story-finish" data-story-finish hidden>🎉 잘했어요! 이야기 별을 받았어요! ⭐</div>
     </article>`;
   screen.querySelector("[data-story-back]").onclick = () => {
-    speechSynthesis.cancel();
+    stopSpeech();
     state.view = `story:${key}`;
     render();
   };
   screen.querySelectorAll("[data-line]").forEach(button => {
-    button.onclick = () => speak(lesson.lines[Number(button.dataset.line)][0]);
+    button.onclick = () => {
+      const line = lesson.lines[Number(button.dataset.line)];
+      button.dataset.lang === "ko" ? speak(line[1],{lang:"ko-KR"}) : speak(line[0]);
+    };
   });
-  screen.querySelector("[data-phrase]").onclick = () => speakSlow(lesson.phrase);
+  screen.querySelectorAll("[data-read-story]").forEach(button => {
+    button.onclick = () => button.dataset.readStory === "ko"
+      ? speakSequence(lesson.lines.map(line => line[1]),{lang:"ko-KR",rate:.8})
+      : speakSequence(lesson.lines.map(line => line[0]),{rate:.74});
+  });
+  screen.querySelectorAll("[data-phrase]").forEach(button => {
+    button.onclick = () => button.dataset.phrase === "ko"
+      ? speak(phraseTranslation,{lang:"ko-KR",rate:.76})
+      : speakSlow(lesson.phrase);
+  });
   screen.querySelectorAll("[data-story-word]").forEach(button => {
     button.onclick = () => {
-      const [en] = lesson.words[Number(button.dataset.storyWord)];
-      speak(en,{rate:.6,pitch:1.08});
+      const [en,ko] = lesson.words[Number(button.dataset.storyWord)];
+      button.dataset.lang === "ko" ? speak(ko,{lang:"ko-KR"}) : speak(en,{rate:.64});
+    };
+  });
+  screen.querySelectorAll("[data-story-option-audio]").forEach(button => {
+    button.onclick = () => {
+      const [en] = lesson.quiz.options[Number(button.dataset.storyOptionAudio)];
+      button.dataset.lang === "ko"
+        ? speak(koreanMeanings[en] || en,{lang:"ko-KR"})
+        : speak(en,{rate:.66});
     };
   });
   const feedback = screen.querySelector("[data-story-feedback]");
@@ -423,13 +500,13 @@ function renderDialogue(l) {
   screen.querySelector("[data-next]").onclick=nextStage;
 }
 function renderWords(l) {
-  const cards=l.words.map((x,i)=>`<button class="word-card" data-word="${i}"><span class="word-emoji">${x.emoji}</span><span class="word-en">${x.en}</span><span class="word-ko">${x.ko}</span><span class="word-hint">🔊 눌러서 들어보세요</span></button>`).join("");
+  const cards=l.words.map((x,i)=>`<article class="word-card"><span class="word-emoji">${x.emoji}</span><span class="word-en">${x.en}</span><span class="word-ko">${x.ko}</span><span class="word-audio-row"><button data-word="${i}" data-lang="en">🇺🇸 영어</button><button data-word="${i}" data-lang="ko">🇰🇷 한국어</button></span></article>`).join("");
   shell(2,"⭐ 오늘의 주요 단어","단어 카드를 누르면 <strong>단어를 천천히 두 번</strong> 들려주고 예문도 읽어줍니다.",`<div class="word-grid">${cards}</div><div class="notice">부모님 팁: 바로 말하도록 재촉하기보다 같은 단어를 2~3번 즐겁게 반복해 주세요.</div>`,`<button class="secondary-btn" data-prev>← 이전</button><button class="primary-btn" data-next>그림 퀴즈 풀기 →</button>`);
-  screen.querySelectorAll("[data-word]").forEach(btn=>btn.onclick=()=>{const x=l.words[+btn.dataset.word];playWord(x.en,x.example);});
+  screen.querySelectorAll("[data-word]").forEach(btn=>btn.onclick=()=>{const x=l.words[+btn.dataset.word];btn.dataset.lang==="ko"?speak(x.ko,{lang:"ko-KR"}):playWord(x.en,x.example);});
   screen.querySelector("[data-prev]").onclick=prevStage; screen.querySelector("[data-next]").onclick=nextStage;
 }
 function renderQuiz(l) {
-  const cards=l.quiz.options.map((x,i)=>`<button class="quiz-option" data-option="${i}"><span class="quiz-emoji">${x.emoji}</span><span class="quiz-word">${x.en}</span></button>`).join("");
+  const cards=l.quiz.options.map((x,i)=>`<article class="quiz-choice"><button class="quiz-option" data-option="${i}"><span class="quiz-emoji">${x.emoji}</span><span class="quiz-word">${x.en}</span></button><span class="choice-audio-row"><button data-option-audio="${i}" data-lang="en">🇺🇸 영어</button><button data-option-audio="${i}" data-lang="ko">🇰🇷 한국어</button></span></article>`).join("");
   shell(3,`🎯 ${l.quiz.prompt}`,"그림을 누르면 단어를 들을 수 있어요.",`<div class="quiz-grid">${cards}</div><p id="feedback" class="feedback"></p>`,`<button class="secondary-btn" data-prev>← 이전</button><button class="primary-btn" data-next ${state.quizSolved?"":"disabled"}>완료하기 →</button>`);
   const next=screen.querySelector("[data-next]"), feedback=screen.querySelector("#feedback");
   screen.querySelectorAll("[data-option]").forEach(btn=>btn.onclick=()=>{
@@ -437,6 +514,10 @@ function renderQuiz(l) {
     screen.querySelectorAll(".quiz-option").forEach(el=>el.classList.remove("wrong"));
     if(x.en===l.quiz.answer){btn.classList.add("correct");feedback.textContent="🎉 정답이에요! 정말 잘했어요!";state.quizSolved=true;next.disabled=false;}
     else{btn.classList.add("wrong");feedback.textContent="한 번 더 찾아볼까요? 😊";}
+  });
+  screen.querySelectorAll("[data-option-audio]").forEach(btn=>btn.onclick=()=>{
+    const x=l.quiz.options[+btn.dataset.optionAudio];
+    btn.dataset.lang==="ko"?speak(koreanMeanings[x.en]||x.en,{lang:"ko-KR"}):speak(x.en,{rate:.66});
   });
   screen.querySelector("[data-prev]").onclick=prevStage; next.onclick=()=>state.quizSolved&&nextStage();
 }
@@ -451,11 +532,11 @@ function renderCompletion(l) {
   speak("Great job! You did it!",{rate:.76,pitch:1.02});
   screen.querySelector("[data-review]").onclick=()=>{state.stage=0;state.quizSolved=false;render();};
 }
-function nextStage(){speechSynthesis.cancel();state.stage=Math.min(state.stage+1,3);render();scrollTo({top:0,behavior:"smooth"});}
-function prevStage(){speechSynthesis.cancel();state.stage=Math.max(state.stage-1,0);render();scrollTo({top:0,behavior:"smooth"});}
+function nextStage(){stopSpeech();state.stage=Math.min(state.stage+1,3);render();scrollTo({top:0,behavior:"smooth"});}
+function prevStage(){stopSpeech();state.stage=Math.max(state.stage-1,0);render();scrollTo({top:0,behavior:"smooth"});}
 
 homeButton.onclick = () => {
-  speechSynthesis.cancel();
+  stopSpeech();
   state.view = "home";
   renderDayNav();
   render();
@@ -469,7 +550,7 @@ function refreshDailyLesson() {
   Object.assign(state, {
     view:"home", currentDay:lessonKeyFor(), todayKey:newTodayKey, stage:0, quizSolved:false
   });
-  speechSynthesis.cancel();
+  stopSpeech();
   renderDayNav();
   render();
 }
