@@ -675,7 +675,9 @@ function syncViewportFrame() {
   viewportFrame = requestAnimationFrame(() => {
     const viewport = window.visualViewport;
     const visibleHeight = Math.round(viewport ? viewport.height : window.innerHeight);
-    const visibleTop = Math.round(viewport ? viewport.offsetTop : 0);
+    // offsetTop can represent a browser zoom/pan offset, not the page's top.
+    // The app frame must always begin at the top edge of the visible page.
+    const visibleTop = 0;
     document.documentElement.style.setProperty("--app-height", `${visibleHeight}px`);
     document.documentElement.style.setProperty("--viewport-top", `${visibleTop}px`);
   });
