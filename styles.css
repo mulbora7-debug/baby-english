@@ -226,6 +226,7 @@ h1 { margin:0; color:#9d174d; font-size:clamp(1.65rem,6vw,2.2rem); text-shadow:0
     height:var(--app-height,100vh); margin:0 auto;
     padding:10px 18px 12px; overflow:hidden;
   }
+  .app-shell.home-view { padding-top:0; }
   .header {
     position:relative; flex:0 0 58px; display:flex; flex-direction:column;
     justify-content:center; margin:0; padding:0 270px 0 150px;
@@ -398,6 +399,7 @@ h1 { margin:0; color:#9d174d; font-size:clamp(1.65rem,6vw,2.2rem); text-shadow:0
 }
 @media (min-width:700px) and (orientation:landscape) and (max-height:650px) {
   .app-shell { padding:6px 12px 8px; }
+  .app-shell.home-view { padding-top:0; }
   .header { flex-basis:48px; padding:0 220px 0 118px; }
   .home-btn { top:4px; min-height:36px; padding:0 12px; font-size:.9rem; }
   .eyebrow { font-size:.65rem; }
